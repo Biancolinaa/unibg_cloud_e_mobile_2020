@@ -1,0 +1,52 @@
+import sys
+import json
+import pyspark
+from pyspark.sql.functions import col, collect_list, array_join
+
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+
+
+###### READ PARAMETERS
+args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+
+##### START JOB CONTEXT AND JOB
+sc = SparkContext()
+
+
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+
+
+    
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+
+#### READ INPUT FILES TO CREATE AN INPUT DATASET
+speaker_path = "s3://unibg-tedx-data-bianca/speakers_dataset.csv"
+speakers_dataset = spark.read \
+    .option("header","true") \
+    .option("quote", "\"") \
+    .option("escape", "\"") \
+    .csv(speaker_path)
+    
+speakers_dataset.printSchema()
+
+mongo_uri = "mongodb://clustertcm-shard-00-00-30jlj.mongodb.net:27017,clustertcm-shard-00-01-30jlj.mongodb.net:27017,clustertcm-shard-00-02-30jlj.mongodb.net:27017"
+
+write_mongo_options = {
+    "uri": mongo_uri,
+    "database": "unibg_tedx",
+    "collection": "speaker_data",
+    "username": "admin",
+    "password": "M0ehrmUw61UN8OSF",
+    "ssl": "true",
+    "ssl.domain_match": "false"}
+from awsglue.dynamicframe import DynamicFrame
+speakers_dataset_dynamic_frame = DynamicFrame.fromDF(speakers_dataset, glueContext, "nested")
+
+glueContext.write_dynamic_frame.from_options(speakers_dataset_dynamic_frame, connection_type="mongodb", connection_options=write_mongo_options)
