@@ -3,7 +3,7 @@ const speaker = require('./speaker.schema');
 
 const getSpeakerByName = async (name) => {
     await connectToDb();
-    const s = await speaker.find({ speaker: new RegExp(name, 'i') });
+    const s = await speaker.find({ main_speaker: new RegExp(name, 'i') });
     return s;
 }
 

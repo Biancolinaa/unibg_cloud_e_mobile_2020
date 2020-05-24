@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const speaker_schema = new mongoose.Schema({
-    speaker: String,
+    main_speaker: String,
     num_talks: Number,
     description: String
 }, { collection: 'speaker_data' });
